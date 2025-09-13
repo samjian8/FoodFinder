@@ -9,6 +9,6 @@ lat = '43.6452'
 lon = '-79.3806'
 radius = 1000 # in meters
 
-url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lon}&radius=1000&type=restaurant&key={GOOGLE_API_KEY}"
+url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lon}&radius={radius}&type=restaurant&key={GOOGLE_API_KEY}"
 response = requests.get(url=url)
 print(response.json())
