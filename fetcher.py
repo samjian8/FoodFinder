@@ -5,10 +5,16 @@ import requests
 dotenv.load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-lat = '43.6452'
-lon = '-79.3806'
-radius = 1000 # in meters
-
-url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lon}&radius={radius}&type=restaurant&key={GOOGLE_API_KEY}"
-response = requests.get(url=url)
-print(response.json())
+params = {
+    "location": "43.6452,-79.3806",
+    "radius": 1000,  # meters
+    "type": "restaurant",
+    "keyword": "japanese",  # e.g., "sushi", "italian", "mexican"
+    "key": GOOGLE_API_KEY,
+}
+r = requests.get(
+    "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
+    params=params, timeout=10
+)
+data = r.json()
+print(data)
