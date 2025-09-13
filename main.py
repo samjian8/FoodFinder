@@ -5,13 +5,16 @@ from typing import List, Optional
 app = FastAPI()
 
 class Preferences(BaseModel):
-    lat: float
-    lng: float
-    radius_m: int = 1500
-    budget_min: Optional[int] = 1
-    budget_max: Optional[int] = 4
-    cuisine_kw: Optional[List[str]] = []
-    max_km: Optional[float] = 2.0
+    place_id: str
+    name: Optional[str] = None
+    rating: Optional[float] = None
+    ratings_count: Optional[int] = None
+    price_level: Optional[int] = None   # 0–4
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    address: Optional[str] = None
+    open_now: Optional[bool] = None
+    types: List[str] = []
 
 @app.post("/ping")
 def ping():
