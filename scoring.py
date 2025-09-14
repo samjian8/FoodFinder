@@ -1,4 +1,9 @@
 from typing import List, Dict, Any, Optional, Tuple
+def filter_open_now(places: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Returns only restaurants that are currently open.
+    """
+    return [p for p in places if p.get("open_now") is True]
 
 def overall_rating_key(p: Dict[str, Any]):
     '''
