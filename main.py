@@ -38,8 +38,15 @@ async def recommend(
 ):
     try:
         raw_places = fetcher.fetch_nearby_restaurants(lat, lng, radius)
-    except (ValueError, ConnectionError) as e:  # Match your fetcher's exceptions
-        raise HTTPException(status_code=502, detail=str(e))
+    except ValueError as e:
+        # API key or API response issues
+        raise HTTPException(status_code=400, detail=f"Configuration or API error: {str(e)}")
+    except ConnectionError as e:
+        # Network or connection issues
+        raise HTTPException(status_code=502, detail=f"Unable to connect to service: {str(e)}")
+    except Exception as e:
+        # Catch any other unexpected errors
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
     
     normalized_places = [normalize.normalize_place(p) for p in raw_places]
 
