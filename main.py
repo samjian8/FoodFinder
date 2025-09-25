@@ -4,6 +4,12 @@ from fastapi.responses import FileResponse
 import fetcher, normalize, scoring
 from pydantic import BaseModel
 from typing import List, Optional
+import time
+import logging
+
+# Set up logging to see timing info
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -36,24 +42,40 @@ async def recommend(
     lng: float = Query(..., description="Longitude"), 
     radius: int = Query(1000, ge=1, le=50000, description="Search radius in meters")
 ):
+    start_time = time.time()
+    logger.info(f"Starting recommendation pipeline for radius: {radius}m")
+    
     try:
+        # Step 1: Fetch raw places from API
+        fetch_start = time.time()
         raw_places = fetcher.fetch_nearby_restaurants(lat, lng, radius)
+        fetch_time = time.time() - fetch_start
+        logger.info(f"Fetching took: {fetch_time:.3f}s")
+        
     except ValueError as e:
-        # API key or API response issues
+        logger.error(f"API error after {time.time() - start_time:.3f}s: {e}")
         raise HTTPException(status_code=400, detail=f"Configuration or API error: {str(e)}")
     except ConnectionError as e:
-        # Network or connection issues
+        logger.error(f"Connection error after {time.time() - start_time:.3f}s: {e}")
         raise HTTPException(status_code=502, detail=f"Unable to connect to service: {str(e)}")
     except Exception as e:
-        # Catch any other unexpected errors
+        logger.error(f"Unexpected error after {time.time() - start_time:.3f}s: {e}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
     
+    # Step 2: Normalize places
+    normalize_start = time.time()
     normalized_places = [normalize.normalize_place(p) for p in raw_places]
+    normalize_time = time.time() - normalize_start
+    logger.info(f"Normalization took: {normalize_time:.3f}s")
 
-    # Try to filter for explicitly open restaurants
+    # Step 3: Filter for open restaurants
+    filter_start = time.time()
     open_places = scoring.filter_open_now(normalized_places)
+    filter_time = time.time() - filter_start
+    logger.info(f"Filtering took: {filter_time:.3f}s")
     
-    # Apply scoring to get best recommendations
+    # Step 4: Apply scoring algorithms
+    scoring_start = time.time()
     scored_places = []
     
     # Get best overall restaurant
@@ -70,5 +92,11 @@ async def recommend(
     gem = scoring.pick_hidden_gem(open_places)
     if gem and gem not in scored_places:  # Avoid duplicates
         scored_places.append(gem)
+    
+    scoring_time = time.time() - scoring_start
+    total_time = time.time() - start_time
+    
+    logger.info(f"Scoring took: {scoring_time:.3f}s")
+    logger.info(f"TOTAL PIPELINE TIME: {total_time:.3f}s")
     
     return [Restaurants(**place) for place in scored_places]
